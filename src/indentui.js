@@ -8,6 +8,8 @@
  */
 import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
 import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
+import SplitButtonView from '@ckeditor/ckeditor5-ui/src/dropdown/button/splitbuttonview';
+import { createDropdown, addToolbarToDropdown } from '@ckeditor/ckeditor5-ui/src/dropdown/utils';
 
 import indentIcon from '../theme/icons/indent.svg';
 import outdentIcon from '../theme/icons/outdent.svg';
@@ -36,13 +38,85 @@ export default class IndentUI extends Plugin {
 	init() {
 		const editor = this.editor;
 		const locale = editor.locale;
+		const componentFactory = editor.ui.componentFactory;
 		const t = editor.t;
 
 		const localizedIndentIcon = locale.uiLanguageDirection == 'ltr' ? indentIcon : outdentIcon;
 		const localizedOutdentIcon = locale.uiLanguageDirection == 'ltr' ? outdentIcon : indentIcon;
 
-		this._defineButton( 'indent', t( 'Increase indent' ), localizedIndentIcon );
-		this._defineButton( 'outdent', t( 'Decrease indent' ), localizedOutdentIcon );
+		const indentLabel = t( 'Increase indent' );
+		const outdentLabel = t( 'Decrease indent' );
+
+		this._defineButton( 'indent', indentLabel, localizedIndentIcon );
+		this._defineButton( 'outdent', outdentLabel, localizedOutdentIcon );
+
+		componentFactory.add( 'indentTools', locale => {
+			const indentCommand = editor.commands.get( 'indent' );
+			const outdentCommand = editor.commands.get( 'outdent' );
+			const dropdownView = createDropdown( locale, SplitButtonView );
+			const splitButtonView = dropdownView.buttonView;
+			const commands = [ indentCommand, outdentCommand ];
+			const buttons = [ 'indent', 'outdent' ].map( commandName => {
+				const buttonView = componentFactory.create( commandName );
+
+				this.listenTo( buttonView, 'execute', () => {
+					dropdownView.set( {
+						lastExecutedCommandName: commandName
+					} );
+				} );
+
+				return buttonView;
+			} );
+
+			// -- Setup the dropdown.
+
+			dropdownView.set( {
+				lastExecutedCommandName: 'indent'
+			} );
+
+			addToolbarToDropdown( dropdownView, buttons );
+
+			dropdownView.toolbarView.ariaLabel = t( 'Indent toolbar' );
+
+			dropdownView.bind( 'isEnabled' ).toMany( commands, 'isEnabled', () => {
+				return editor.commands.get( dropdownView.lastExecutedCommandName ).isEnabled;
+			} );
+
+			// -- Setup the split button.
+
+			splitButtonView.set( {
+				isToggleable: true
+			} );
+
+			splitButtonView.bind( 'tooltip' ).to( dropdownView, 'lastExecutedCommandName', value => {
+				return value === 'indent' ? indentLabel : outdentLabel;
+			} );
+
+			splitButtonView.bind( 'icon' ).to( dropdownView, 'lastExecutedCommandName', value => {
+				return value === 'indent' ? localizedIndentIcon : localizedOutdentIcon;
+			} );
+
+			splitButtonView.bind( 'isOn' ).toMany( commands, 'isOn', () => {
+				return editor.commands.get( dropdownView.lastExecutedCommandName ).isOn;
+			} );
+
+			splitButtonView.delegate( 'execute' ).to( dropdownView );
+
+			splitButtonView.on( 'execute', () => {
+				editor.execute( dropdownView.lastExecutedCommandName );
+				editor.editing.view.focus();
+			} );
+
+			// -- Setup the split button arrow that opens the toolbar.
+
+			splitButtonView.arrowView.unbind( 'isEnabled' );
+
+			splitButtonView.arrowView.bind( 'isEnabled' ).toMany( commands, 'isEnabled', ( ...areEnabled ) => {
+				return areEnabled.some( isEnabled => isEnabled );
+			} );
+
+			return dropdownView;
+		} );
 	}
 
 	/**
