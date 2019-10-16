@@ -56,54 +56,33 @@ export default class IndentUI extends Plugin {
 			const dropdownView = createDropdown( locale, SplitButtonView );
 			const splitButtonView = dropdownView.buttonView;
 			const commands = [ indentCommand, outdentCommand ];
-			const buttons = [ 'indent', 'outdent' ].map( commandName => {
-				const buttonView = componentFactory.create( commandName );
-
-				this.listenTo( buttonView, 'execute', () => {
-					dropdownView.set( {
-						lastExecutedCommandName: commandName
-					} );
-				} );
-
-				return buttonView;
-			} );
+			const buttons = [
+				componentFactory.create( 'indent' ),
+				componentFactory.create( 'outdent' )
+			];
 
 			// -- Setup the dropdown.
-
-			dropdownView.set( {
-				lastExecutedCommandName: 'indent'
-			} );
 
 			addToolbarToDropdown( dropdownView, buttons );
 
 			dropdownView.toolbarView.ariaLabel = t( 'Indent toolbar' );
 
-			dropdownView.bind( 'isEnabled' ).toMany( commands, 'isEnabled', () => {
-				return editor.commands.get( dropdownView.lastExecutedCommandName ).isEnabled;
-			} );
+			dropdownView.bind( 'isEnabled' ).to( indentCommand, 'isEnabled' );
 
 			// -- Setup the split button.
 
 			splitButtonView.set( {
-				isToggleable: true
+				isToggleable: true,
+				tooltip: indentLabel,
+				icon: localizedIndentIcon
 			} );
 
-			splitButtonView.bind( 'tooltip' ).to( dropdownView, 'lastExecutedCommandName', value => {
-				return value === 'indent' ? indentLabel : outdentLabel;
-			} );
-
-			splitButtonView.bind( 'icon' ).to( dropdownView, 'lastExecutedCommandName', value => {
-				return value === 'indent' ? localizedIndentIcon : localizedOutdentIcon;
-			} );
-
-			splitButtonView.bind( 'isOn' ).toMany( commands, 'isOn', () => {
-				return editor.commands.get( dropdownView.lastExecutedCommandName ).isOn;
-			} );
+			splitButtonView.bind( 'isOn' ).to( indentCommand, 'isOn' );
 
 			splitButtonView.delegate( 'execute' ).to( dropdownView );
 
 			splitButtonView.on( 'execute', () => {
-				editor.execute( dropdownView.lastExecutedCommandName );
+				editor.execute( 'indent' );
 				editor.editing.view.focus();
 			} );
 
