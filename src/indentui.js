@@ -8,8 +8,7 @@
  */
 import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
 import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
-import SplitButtonView from '@ckeditor/ckeditor5-ui/src/dropdown/button/splitbuttonview';
-import { createDropdown, addToolbarToDropdown } from '@ckeditor/ckeditor5-ui/src/dropdown/utils';
+import { createStaticSplitButtonToolbar } from '@ckeditor/ckeditor5-ui/src/dropdown/utils';
 
 import indentIcon from '../theme/icons/indent.svg';
 import outdentIcon from '../theme/icons/outdent.svg';
@@ -51,50 +50,10 @@ export default class IndentUI extends Plugin {
 		this._defineButton( 'outdent', outdentLabel, localizedOutdentIcon );
 
 		componentFactory.add( 'indentTools', locale => {
-			const indentCommand = editor.commands.get( 'indent' );
-			const outdentCommand = editor.commands.get( 'outdent' );
-			const dropdownView = createDropdown( locale, SplitButtonView );
-			const splitButtonView = dropdownView.buttonView;
-			const commands = [ indentCommand, outdentCommand ];
-			const buttons = [
+			return createStaticSplitButtonToolbar( locale, [
 				componentFactory.create( 'indent' ),
 				componentFactory.create( 'outdent' )
-			];
-
-			// -- Setup the dropdown.
-
-			addToolbarToDropdown( dropdownView, buttons );
-
-			dropdownView.toolbarView.ariaLabel = t( 'Indent toolbar' );
-
-			dropdownView.bind( 'isEnabled' ).to( indentCommand, 'isEnabled' );
-
-			// -- Setup the split button.
-
-			splitButtonView.set( {
-				isToggleable: true,
-				tooltip: indentLabel,
-				icon: localizedIndentIcon
-			} );
-
-			splitButtonView.bind( 'isOn' ).to( indentCommand, 'isOn' );
-
-			splitButtonView.delegate( 'execute' ).to( dropdownView );
-
-			splitButtonView.on( 'execute', () => {
-				editor.execute( 'indent' );
-				editor.editing.view.focus();
-			} );
-
-			// -- Setup the split button arrow that opens the toolbar.
-
-			splitButtonView.arrowView.unbind( 'isEnabled' );
-
-			splitButtonView.arrowView.bind( 'isEnabled' ).toMany( commands, 'isEnabled', ( ...areEnabled ) => {
-				return areEnabled.some( isEnabled => isEnabled );
-			} );
-
-			return dropdownView;
+			] );
 		} );
 	}
 
