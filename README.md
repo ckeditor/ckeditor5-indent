@@ -1,6 +1,10 @@
 CKEditor 5 block indentation feature
 ====================================
 
+<h3 align=center>⚠⚠ This repository was moved ⚠⚠</h3>
+
+<p align=center>The package was moved to the <a href="https://github.com/ckeditor/ckeditor5/tree/master/packages">main repository</a>.</p>
+
 [![npm version](https://badge.fury.io/js/%40ckeditor%2Fckeditor5-indent.svg)](https://www.npmjs.com/package/@ckeditor/ckeditor5-indent)
 [![Dependency Status](https://david-dm.org/ckeditor/ckeditor5-indent/status.svg)](https://david-dm.org/ckeditor/ckeditor5-indent)
 [![devDependency Status](https://david-dm.org/ckeditor/ckeditor5-indent/dev-status.svg)](https://david-dm.org/ckeditor/ckeditor5-indent?type=dev)
